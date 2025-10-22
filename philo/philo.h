@@ -6,7 +6,7 @@
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/16 15:28:32 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/10/22 16:53:17 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/10/22 17:48:16 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ typedef struct s_rules
 }	t_rules;
 
 
-
+int	validate_args(int argc, char **argv);
+long long	ft_atoll(char *s);
 
 #endif
