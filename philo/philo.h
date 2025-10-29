@@ -6,7 +6,7 @@
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/16 15:28:32 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/10/26 12:34:34 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/10/29 17:13:55 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ typedef struct s_rules
 	long long		time_to_sleep;
 	int				meals_limit;
 	int				someone_died;
+	long long		start;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	death_lock;
 }	t_rules;
