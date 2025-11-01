@@ -6,7 +6,7 @@
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/16 15:28:32 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/10/29 17:13:55 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/11/01 17:50:29 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,13 +30,15 @@ typedef struct s_rules
 	long long		start;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	death_lock;
+	pthread_mutex_t	print_lock;
 }	t_rules;
 
 typedef struct s_philosopher
 {
-	int				id;
-	long long		last_meal;
-	int				meals_eaten;
+	int					id;
+	long long			last_meal;
+	int					meals_eaten;
+	pthread_mutex_t		eat_lock;
 	t_rules		*rules;
 } t_philosopher;
 

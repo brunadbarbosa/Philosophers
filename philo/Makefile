@@ -6,13 +6,13 @@
 #    By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/10/16 13:55:41 by brmaria-          #+#    #+#              #
-#    Updated: 2025/10/16 13:56:02 by brmaria-         ###   ########.fr        #
+#    Updated: 2025/11/01 12:59:47 by brmaria-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 
 # name
-NAME = push_swap
+NAME = philo
 
 # compiler and flags:
 CC = cc

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   0-main.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/16 15:44:37 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/10/29 17:18:25 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/11/01 17:53:41 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,59 @@ long long	get_time_in_ms(void)
 	
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+void	print_action(t_philosopher *philo, const char *action, t_rules *rules)
+{
+	pthread_mutex_lock(&rules->death_lock);
+	if (!rules->someone_died)
+	{
+		pthread_mutex_lock(&philo->rules->print_lock);
+		printf("%lld %d %s\n", get_time_in_ms() - rules->start, philo->id, action);
+		pthread_mutex_unlock(&philo->rules->print_lock);
+	}
+	pthread_mutex_unlock(&rules->death_lock);
+}
+
+void	grab_forks(t_philosopher *philo, t_rules *rules)
+{
+	int	left;
+	int	right;
+	
+	left = philo->id - 1;
+	right = (philo->id % rules->num_philos);
+	
+	if (philo->id % 2 == 0)
+	{
+		pthread_mutex_lock(&rules->forks[right]);
+		print_action(philo, "has taken a fork", rules);
+		pthread_mutex_lock(&rules->forks[left]);
+		print_action(philo, "has taken a fork", rules);
+	}
+	else
+	{
+		pthread_mutex_lock(&rules->forks[left]);
+		print_action(philo, "has taken a fork", rules);
+		pthread_mutex_lock(&rules->forks[right]);
+		print_action(philo, "has taken a fork", rules);
+	}
+	pthread_mutex_lock(&philo->eat_lock);
+	philo->meals_eaten++;
+	philo->last_meal = get_time_in_ms();
+	pthread_mutex_unlock(&philo->eat_lock);
+	print_action(philo, "is eating", rules);
+}
+
+int	check_death(t_philosopher *philo, t_rules *rules)
+{
+	pthread_mutex_lock(&philo->rules->death_lock);
+	if(rules->someone_died)
+	{
+		pthread_mutex_unlock(&philo->rules->death_lock);
+		return (1);
+	}
+	pthread_mutex_unlock(&philo->rules->death_lock);
+	return (0);
 }
 
 void	*monitor_routine(void *arg)
@@ -43,7 +96,7 @@ void	*monitor_routine(void *arg)
 			if (get_time_in_ms() - philos[i].last_meal > rules->time_to_die)
 			{
 				rules->someone_died = 1;
-				printf("Philosopher %d died\n", philos[i].id);
+				printf("%lld %d died!\n", get_time_in_ms() - philos[i].rules->start, philos[i].id);
 				pthread_mutex_unlock(&rules->death_lock);
 				return (NULL);
 			}
@@ -94,45 +147,34 @@ int	init_mutexes(t_rules *rules)
 		}
 		i++;
 	}
+	pthread_mutex_init(&rules->print_lock, NULL);
+	pthread_mutex_init(&rules->death_lock, NULL);
 	return (1);
 }
 
 void	*routine(void *arg)
 {
 	t_philosopher	*philo;
-	int	left;
-	int	right;
+	int				left;
+	int				right;
 
 	philo = (t_philosopher *)arg;
 	left = philo->id - 1;
 	right = (philo->id) % philo->rules->num_philos;
 
-
 	while (1)
 	{
-		pthread_mutex_lock(&philo->rules->death_lock);
-		if(philo->rules->someone_died)
-		{
-			pthread_mutex_unlock(&philo->rules->death_lock);
-			break ;
-		}
-		pthread_mutex_unlock(&philo->rules->death_lock);
-		printf("Philosopher %d is thinking\n", philo->id);
-		// usleep(200);
+		if(check_death(philo, philo->rules))
+			return (NULL);
+		print_action(philo, "is thinking", philo->rules);
+		usleep(200);
 
-		pthread_mutex_lock(&philo->rules->forks[left]);
-		printf("Philosopher %d picked up left fork \n", philo->id);
-		pthread_mutex_lock(&philo->rules->forks[right]);
-		printf("Philosopher %d picked up right fork \n", philo->id);
-
-		printf("%lld Philosopher %d is eating!\n", get_time_in_ms() - philo->rules->start, philo->id);
-		ft_usleep(philo->rules->time_to_eat);
+		grab_forks(philo, philo->rules);
 
 		pthread_mutex_unlock(&philo->rules->forks[left]);
 		pthread_mutex_unlock(&philo->rules->forks[right]);
-		printf("Philosopher %d released forks!\n", philo->id);
 
-		printf("Philosopher %d is sleeping!\n", philo->id);
+		print_action(philo, "is sleeping", philo->rules);
 		ft_usleep(philo->rules->time_to_sleep);
 	}
 	return (NULL);
@@ -141,8 +183,8 @@ void	*routine(void *arg)
 void	ft_philosophers(t_philosopher *philos, t_rules *rules)
 {
 	pthread_t	*threads;
-	// pthread_t	monitoring;
-	int	i;
+	pthread_t	monitoring;
+	int			i;
 
 	threads = malloc(sizeof(pthread_t) * rules->num_philos);
 	if (!threads)
@@ -158,8 +200,8 @@ void	ft_philosophers(t_philosopher *philos, t_rules *rules)
 		}
 		i++;
 	}
-	// if (pthread_create(&monitoring, NULL, monitor_routine, philos) == 0)
-	// 	pthread_join(monitoring, NULL);
+	if (pthread_create(&monitoring, NULL, monitor_routine, philos) == 0)
+		pthread_join(monitoring, NULL);
 	while (--i >= 0)
 		pthread_join(threads[i], NULL);
 	free(threads);
@@ -193,8 +235,7 @@ void	set_args(t_rules *rules, char **argv)
 	rules->start = get_time_in_ms();
 	if (argv[5])
 		rules->meals_limit = ft_atoll(argv[5]);
-	else
-		rules->meals_limit = -1;
+	rules->someone_died = 0;
 }
 
 int	ft_isspace(char c)
